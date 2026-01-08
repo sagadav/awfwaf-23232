@@ -337,6 +337,13 @@ const captchaUrl = ref('')
 const config = useRuntimeConfig()
 const API_BASE = config.public.apiBase || '/api'
 
+useHead({
+  title: 'Offer Jet - Вход',
+  meta: [
+    { name: 'description', content: 'Найдем работу на hh.ru за вас. Автоматические отклики и сопроводительные письма.' }
+  ]
+})
+
 const handleLogin = async () => {
   loading.value = true
   errorMessage.value = ''

@@ -49,8 +49,8 @@ class ProcessDistribution implements ShouldQueue
 
             'my_letter' => $this->distribution->cover_letter,
             'resume_hash' => $hash,
-            'pages_count' => ceil($this->distribution->target_applications / 20),
-            'url' => "https://hh.ru/search/vacancy?hhtmFrom=main&hhtmFromLabel=vacancy_search_line&search_field=name&search_field=company_name&search_field=description&enable_snippets=false&L_save_area=true&text={$text}&work_format=REMOTE&items_on_page=20",
+            'pages_count' => ceil($this->distribution->target_applications / 5),
+            'url' => "https://hh.ru/search/vacancy?hhtmFrom=main&hhtmFromLabel=vacancy_search_line&search_field=name&search_field=company_name&search_field=description&enable_snippets=false&L_save_area=true&text={$text}&work_format=REMOTE&items_on_page=5",
             'filters' => $this->distribution->search_filters,
         ];
             // &experience=between1And3

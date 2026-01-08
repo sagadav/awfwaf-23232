@@ -28,7 +28,7 @@
           icon-color="text-green-600"
           svg-path="M13 10V3L4 14h7v7l9-11h-7z"
         />
-        <StatsCard 
+        <!-- <StatsCard 
           label="Отправлено откликов" 
           :value="totalSent" 
           icon-bg="bg-blue-100" 
@@ -41,7 +41,7 @@
           icon-bg="bg-purple-100" 
           icon-color="text-purple-600"
           svg-path="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
+        /> -->
       </div>
 
       <!-- Action Bar -->

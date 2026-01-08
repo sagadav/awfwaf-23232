@@ -66,7 +66,7 @@
         <p class="text-[10px] sm:text-xs text-gray-400 mb-0.5 uppercase tracking-wider font-bold">Цель</p>
         <p class="text-base sm:text-lg font-bold text-gray-900 leading-none">{{ props.distribution.target_applications }}</p>
       </div>
-      <div class="bg-gray-50/50 p-2.5 rounded-xl">
+      <!-- <div class="bg-gray-50/50 p-2.5 rounded-xl">
         <p class="text-[10px] sm:text-xs text-gray-400 mb-0.5 uppercase tracking-wider font-bold">Отклики</p>
         <p class="text-base sm:text-lg font-bold text-gray-900 leading-none">{{ props.distribution.applications_sent }}</p>
       </div>
@@ -77,7 +77,7 @@
       <div class="bg-gray-50/50 p-2.5 rounded-xl">
         <p class="text-[10px] sm:text-xs text-gray-400 mb-0.5 uppercase tracking-wider font-bold">Ответы</p>
         <p class="text-base sm:text-lg font-bold text-gray-900 leading-none">{{ props.distribution.responses_count }}</p>
-      </div>
+      </div> -->
     </div>
 
     <div class="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
