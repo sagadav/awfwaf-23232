@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-brand-blue: #2563EB;
+  /* Vibrant Blue */
+  --color-brand-lime: #D9F99D;
+  /* Lime Green - adjusting to a nice tailwind lime */
+  --color-brand-black: #111827;
+  --font-family-base: 'Inter', sans-serif;
+}
+
+body {
+  font-family: var(--font-family-base);
+  color: var(--color-brand-black);
+  background-color: white;
+}
+
+/* Custom Utils if needed */
+.text-brand-blue {
+  color: var(--color-brand-blue);
+}
+
+.bg-brand-blue {
+  background-color: var(--color-brand-blue);
+}
+
+.bg-brand-lime {
+  background-color: var(--color-brand-lime);
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white font-bold py-3 px-6 rounded-full hover:bg-blue-700 transition-colors duration-300;
+}
+
+.btn-secondary {
+  @apply bg-lime-400 text-black font-bold py-3 px-6 rounded-full hover:bg-lime-500 transition-colors duration-300;
+}
+
+.section-container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
