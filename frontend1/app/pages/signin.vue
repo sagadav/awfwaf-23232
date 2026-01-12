@@ -40,27 +40,7 @@
             key="identifier"
             class="flex-1 flex flex-col"
           >
-            <!-- Tabs -->
-            <div class="flex p-1 bg-gray-100 rounded-2xl mb-8">
-              <button
-                :class="[
-                  'flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200',
-                  tab === 'email' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                ]"
-                @click="tab = 'email'"
-              >
-                Email
-              </button>
-              <button
-                :class="[
-                  'flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200',
-                  tab === 'phone' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                ]"
-                @click="tab = 'phone'"
-              >
-                Телефон
-              </button>
-            </div>
+
 
             <form
               class="space-y-6 flex-1 flex flex-col"
@@ -76,23 +56,7 @@
                 </p>
               </div>
 
-              <div v-if="tab === 'email'">
-                <label
-                  for="email"
-                  class="block text-sm font-medium text-gray-700 mb-2"
-                >Электронная почта</label>
-                <input
-                  id="email"
-                  v-model="email"
-                  name="email"
-                  type="email"
-                  required
-                  class="appearance-none block w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary focus:bg-white transition-all"
-                  placeholder="example@mail.ru"
-                >
-              </div>
-
-              <div v-else>
+              <div>
                 <label
                   for="phone"
                   class="block text-sm font-medium text-gray-700 mb-2"
@@ -176,7 +140,7 @@
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
-              Назад к вводу {{ tab === 'email' ? 'почты' : 'телефона' }}
+              Назад к вводу телефона
             </button>
 
             <div class="text-center mb-8">
@@ -185,7 +149,7 @@
               </h3>
               <p class="text-sm text-gray-500">
                 Мы отправили код подтверждения на <br>
-                <span class="font-medium text-gray-900">{{ tab === 'email' ? email : phone }}</span>
+                <span class="font-medium text-gray-900">{{ phone }}</span>
               </p>
             </div>
 
@@ -323,8 +287,6 @@
 
 <script setup lang="ts">
 const step = ref('identifier') // 'identifier' or 'verification'
-const tab = ref('email')
-const email = ref('')
 const phone = ref('')
 const verificationCode = ref('')
 const loading = ref(false)
@@ -347,7 +309,7 @@ useHead({
 const handleLogin = async () => {
   loading.value = true
   errorMessage.value = ''
-  const identifier = tab.value === 'email' ? email.value : phone.value
+  const identifier = phone.value
 
   try {
     const response = await fetch(`${API_BASE}/login`, {
