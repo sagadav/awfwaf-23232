@@ -496,7 +496,7 @@ const _routes = [
   {
     name: "dashboard",
     path: "/dashboard",
-    component: () => import('./dashboard-J3yP0f6R.mjs')
+    component: () => import('./dashboard-BTc3XoKS.mjs')
   }
 ];
 const ROUTE_KEY_PARENTHESES_RE = /(:\w+)\([^)]+\)/g;
