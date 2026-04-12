@@ -1,4 +1,5 @@
-import { ref } from 'vue'
+import { ref } from 'vue';
+import { parseLaravelApiError } from '~/utils/parseLaravelApiError';
 
 export interface Distribution {
   id: number;
@@ -14,7 +15,9 @@ export interface Distribution {
   responses_count: number;
   last_sent_at: string | null;
   completed_at: string | null;
-  resume_link: string;
+  resume_link: string | null;
+  resume_hash?: string | null;
+  resume_title?: string | null;
   cover_letter?: string;
   vacancy_link: string | null;
   created_at: string;
@@ -23,36 +26,39 @@ export interface Distribution {
 export const useDistributions = () => {
   const distributions = ref<Distribution[]>([]);
   const loading = ref(false);
-  const error = ref<string | null>(null);
+  /** Ошибки загрузки списка / удаления (баннер на странице) */
+  const listError = ref<string | null>(null);
+  /** Ошибки создания / обновления в модалке формы */
+  const formError = ref<string | null>(null);
   const user = ref<{ id: number; tier: string } | null>(null);
-  
-  const config = useRuntimeConfig();
-  const API_BASE = config.public.apiBase || '/api';
+
+  const clearFormError = () => {
+    formError.value = null;
+  };
+
+  const authFetch = useAuthApiFetch();
 
   const fetchDistributions = async () => {
     loading.value = true;
-    error.value = null;
+    listError.value = null;
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE}/distributions`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        }
-      });
+      const response = await authFetch('/distributions');
 
       if (!response.ok) {
         if (response.status === 401) {
-          navigateTo('/signin');
           return;
         }
-        throw new Error('Failed to fetch distributions');
+        const detail = await parseLaravelApiError(
+          response,
+          'Не удалось загрузить рассылки'
+        );
+        throw new Error(detail);
       }
 
       const data = await response.json();
       distributions.value = data.data; // Adjusted for JSON Resource wrapper
-    } catch (err: any) {
-      error.value = err.message;
+    } catch (err: unknown) {
+      listError.value = err instanceof Error ? err.message : String(err);
     } finally {
       loading.value = false;
     }
@@ -60,13 +66,7 @@ export const useDistributions = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE}/user`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        }
-      });
+      const response = await authFetch('/user');
       if (response.ok) {
         user.value = await response.json();
       }
@@ -77,50 +77,71 @@ export const useDistributions = () => {
 
   const createDistribution = async (data: Partial<Distribution>) => {
     loading.value = true;
+    formError.value = null;
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE}/distributions`, {
+      const response = await authFetch('/distributions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
         },
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) throw new Error('Failed to create distribution');
-      
+      if (!response.ok) {
+        if (response.status === 401) {
+          return false;
+        }
+        const detail = await parseLaravelApiError(
+          response,
+          'Не удалось создать рассылку'
+        );
+        throw new Error(detail);
+      }
+
       await fetchDistributions();
       return true;
-    } catch (err: any) {
-      error.value = err.message;
+    } catch (err: unknown) {
+      formError.value = err instanceof Error ? err.message : String(err);
       return false;
     } finally {
       loading.value = false;
     }
   };
 
-  const updateDistribution = async (id: number, data: Partial<Distribution>) => {
+  const updateDistribution = async (
+    id: number,
+    data: Partial<Distribution>,
+    opts?: { errorScope?: 'form' | 'list' }
+  ) => {
+    const scope = opts?.errorScope ?? 'form';
     loading.value = true;
+    if (scope === 'form') formError.value = null;
+    else listError.value = null;
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE}/distributions/${id}`, {
+      const response = await authFetch(`/distributions/${id}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
         },
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) throw new Error('Failed to update distribution');
-      
+      if (!response.ok) {
+        if (response.status === 401) {
+          return false;
+        }
+        const detail = await parseLaravelApiError(
+          response,
+          'Не удалось обновить рассылку'
+        );
+        throw new Error(detail);
+      }
+
       await fetchDistributions();
       return true;
-    } catch (err: any) {
-      error.value = err.message;
+    } catch (err: unknown) {
+      if (scope === 'form') formError.value = err instanceof Error ? err.message : String(err);
+      else listError.value = err instanceof Error ? err.message : String(err);
       return false;
     } finally {
       loading.value = false;
@@ -129,22 +150,27 @@ export const useDistributions = () => {
 
   const deleteDistribution = async (id: number) => {
     loading.value = true;
+    listError.value = null;
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE}/distributions/${id}`, {
+      const response = await authFetch(`/distributions/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
       });
 
-      if (!response.ok) throw new Error('Failed to delete distribution');
-      
+      if (!response.ok) {
+        if (response.status === 401) {
+          return false;
+        }
+        const detail = await parseLaravelApiError(
+          response,
+          'Не удалось удалить рассылку'
+        );
+        throw new Error(detail);
+      }
+
       distributions.value = distributions.value.filter(d => d.id !== id);
       return true;
-    } catch (err: any) {
-      error.value = err.message;
+    } catch (err: unknown) {
+      listError.value = err instanceof Error ? err.message : String(err);
       return false;
     } finally {
       loading.value = false;
@@ -154,7 +180,9 @@ export const useDistributions = () => {
   return {
     distributions,
     loading,
-    error,
+    listError,
+    formError,
+    clearFormError,
     user,
     fetchDistributions,
     fetchUserProfile,

@@ -159,7 +159,7 @@ def main():
         cookies = {
             "hhtoken": hhtoken,
             "hhul": hhul,
-            "crypted_id": crypted_id,
+            "crypted_hhuid": crypted_id,
             "_xsrf": xsrf
         }
 

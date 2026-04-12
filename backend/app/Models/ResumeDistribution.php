@@ -21,6 +21,8 @@ class ResumeDistribution extends Model
         'last_sent_at',
         'completed_at',
         'resume_link',
+        'resume_hash',
+        'resume_title',
         'vacancy_link',
         'cover_letter',
     ];

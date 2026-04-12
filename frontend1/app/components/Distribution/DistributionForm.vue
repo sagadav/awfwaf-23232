@@ -6,14 +6,30 @@
       
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Ссылка на резюме (HH.ru)</label>
-          <input 
+          <label class="block text-sm font-medium text-gray-700 mb-1">Резюме с HeadHunter</label>
+          <p v-if="hhLoading" class="text-xs text-gray-500 mb-2">Загружаем ваши резюме…</p>
+          <p v-else-if="hhError" class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-2">
+            {{ hhError }}
+          </p>
+          <select
+            v-model="form.resume_hash"
+            class="w-full px-4 py-2 bg-gray-50/50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary focus:bg-white transition-all mb-2"
+            :disabled="hhLoading || !hhResumes.length"
+          >
+            <option value="">{{ hhResumes.length ? '— Выберите из списка —' : 'Список недоступен' }}</option>
+            <option v-for="r in hhResumes" :key="r.hash" :value="r.hash">
+              {{ r.title }}
+            </option>
+          </select>
+          <p class="text-xs text-gray-500 mb-1">Дополнительно: ссылка (если не хотите пользоваться списком)</p>
+          <input
             v-model="form.resume_link"
             type="url"
-            required
             placeholder="https://hh.ru/resume/..."
             class="w-full px-4 py-2 bg-gray-50/50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary focus:bg-white transition-all"
           />
+          <p class="text-xs text-gray-400 mt-1">Нужно выбрать резюме в списке или указать ссылку.</p>
+          <p v-if="resumeChoiceError" class="text-sm text-red-600 mt-2">{{ resumeChoiceError }}</p>
         </div>
 
         <div>
@@ -75,8 +91,8 @@
           ></textarea>
         </div>
 
-        <div v-if="props.error" class="text-sm text-red-600 bg-red-50 p-3 rounded-xl">
-          {{ props.error }}
+        <div v-if="props.formError" class="text-sm text-red-600 bg-red-50 p-3 rounded-xl">
+          {{ props.formError }}
         </div>
 
         <div class="flex gap-3 pt-4">
@@ -110,20 +126,27 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, computed } from 'vue'
+import { reactive, ref, watch, computed } from 'vue'
 import type { Distribution } from '~/composables/useDistributions'
+import { useHhResumes } from '~/composables/useHhResumes'
 
 const props = defineProps<{
   distribution: Distribution | null
   user: { id: number; tier: string } | null
   isOpen: boolean
   loading: boolean
-  error: string | null
+  formError: string | null
 }>()
 
 const emit = defineEmits(['close', 'save'])
 
+const { resumes: hhResumes, loading: hhLoading, error: hhError, fetchResumes } = useHhResumes()
+
+const resumeChoiceError = ref('')
+
 const form = reactive({
+  resume_hash: '',
+  resume_title: '' as string,
   resume_link: '',
   query: '',
   target_applications: 40,
@@ -138,13 +161,17 @@ const maxApplications = computed(() => {
 
 watch(() => props.distribution, (newVal) => {
   if (newVal) {
-    form.resume_link = newVal.resume_link
+    form.resume_hash = newVal.resume_hash || ''
+    form.resume_title = newVal.resume_title || ''
+    form.resume_link = newVal.resume_link || ''
     form.query = newVal.search_filters?.query || ''
     form.target_applications = newVal.target_applications
     form.daily_limit = newVal.daily_limit || 10
     form.status = newVal.status
     form.cover_letter = newVal.cover_letter || ''
   } else {
+    form.resume_hash = ''
+    form.resume_title = ''
     form.resume_link = ''
     form.query = ''
     form.target_applications = 40
@@ -154,14 +181,61 @@ watch(() => props.distribution, (newVal) => {
   }
 }, { immediate: true })
 
+watch(
+  () => form.resume_hash,
+  (hash) => {
+    if (!hash) {
+      form.resume_title = ''
+      return
+    }
+    const item = hhResumes.value.find((r) => r.hash === hash)
+    form.resume_title = item?.title || ''
+  }
+)
+
+watch(hhResumes, () => {
+  if (!form.resume_hash) return
+  const item = hhResumes.value.find((r) => r.hash === form.resume_hash)
+  if (item) {
+    form.resume_title = item.title
+  } else if (props.distribution?.resume_title) {
+    form.resume_title = props.distribution.resume_title
+  }
+})
+
+watch(
+  () => props.isOpen,
+  (open) => {
+    if (open) {
+      resumeChoiceError.value = ''
+      fetchResumes()
+    }
+  }
+)
+
 const handleSubmit = () => {
-  const payload = {
-    resume_link: form.resume_link,
+  resumeChoiceError.value = ''
+  const link = form.resume_link.trim()
+  if (!form.resume_hash && !link) {
+    resumeChoiceError.value = 'Выберите резюме из списка или вставьте ссылку на hh.ru.'
+    return
+  }
+
+  const payload: Record<string, unknown> = {
     search_filters: { query: form.query },
     target_applications: form.target_applications,
     daily_limit: form.daily_limit,
     status: form.status,
     cover_letter: form.cover_letter
+  }
+  if (form.resume_hash) {
+    payload.resume_hash = form.resume_hash
+    if (form.resume_title) {
+      payload.resume_title = form.resume_title
+    }
+  }
+  if (link) {
+    payload.resume_link = link
   }
   emit('save', payload)
 }

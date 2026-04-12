@@ -73,6 +73,20 @@
             icon-color="text-green-600"
             svg-path="M13 10V3L4 14h7v7l9-11h-7z"
           />
+          <StatsCard 
+            label="Отправлено откликов" 
+            :value="totalSent" 
+            icon-bg="bg-blue-100" 
+            icon-color="text-blue-600"
+            svg-path="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+          />
+          <StatsCard 
+            label="Ответов работодателей" 
+            :value="totalResponses" 
+            icon-bg="bg-amber-100" 
+            icon-color="text-amber-600"
+            svg-path="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+          />
         </div>
 
         <!-- Action Bar -->
@@ -90,43 +104,61 @@
         </div>
 
         <!-- Error State -->
-        <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 flex items-center gap-3">
+        <div v-if="listError" class="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 flex items-center gap-3">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          {{ error }}
+          {{ listError }}
         </div>
 
-        <!-- Distributions List -->
-        <div v-if="loading && !distributions.length" class="text-center py-12">
-          <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-brand-primary"></div>
-        </div>
-
-        <div v-else-if="distributions.length === 0" class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
-          <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-            </svg>
-          </div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">Активных рассылок нет</h3>
-          <p class="text-gray-600 mb-6">Создайте свою первую рассылку, чтобы запустить автоматическую отправку откликов</p>
-          <button 
-            @click="openCreateModal"
-            class="inline-flex items-center gap-2 px-6 py-3 bg-brand-primary text-white font-semibold rounded-xl hover:bg-brand-primary/90 transition-all"
+        <!-- Distributions List / loading -->
+        <div v-if="loading && !distributions.length" class="grid gap-4" aria-busy="true">
+          <div
+            v-for="n in 3"
+            :key="n"
+            class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 animate-pulse"
           >
-            Создать рассылку
-          </button>
+            <div class="flex justify-between mb-4">
+              <div class="space-y-2 flex-1">
+                <div class="h-5 bg-gray-200 rounded w-24" />
+                <div class="h-4 bg-gray-100 rounded w-3/4 max-w-md" />
+                <div class="h-4 bg-gray-100 rounded w-1/2 max-w-sm" />
+              </div>
+              <div class="h-8 w-8 bg-gray-200 rounded-full shrink-0" />
+            </div>
+            <div class="h-16 bg-gray-100 rounded-xl mb-3 max-w-xs" />
+            <div class="h-2 bg-gray-200 rounded-full w-full mb-2" />
+            <div class="h-3 bg-gray-100 rounded w-40" />
+          </div>
         </div>
 
-        <div id="tour-distributions" v-else class="grid gap-4">
-          <DistributionCard 
-            v-for="dist in distributions" 
-            :key="dist.id" 
-            :distribution="dist"
-            @edit="openEditModal"
-            @delete="confirmDelete"
-            @toggle-status="handleToggleStatus"
-          />
+        <div v-else id="tour-distributions">
+          <div v-if="distributions.length === 0" class="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Активных рассылок нет</h3>
+            <p class="text-gray-600 mb-6">Создайте свою первую рассылку, чтобы запустить автоматическую отправку откликов</p>
+            <button 
+              @click="openCreateModal"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-brand-primary text-white font-semibold rounded-xl hover:bg-brand-primary/90 transition-all"
+            >
+              Создать рассылку
+            </button>
+          </div>
+
+          <div v-else class="grid gap-4">
+            <DistributionCard 
+              v-for="dist in distributions" 
+              :key="dist.id" 
+              :distribution="dist"
+              @edit="openEditModal"
+              @delete="confirmDelete"
+              @toggle-status="handleToggleStatus"
+            />
+          </div>
         </div>
       </div>
 
@@ -142,8 +174,8 @@
       :distribution="editingDistribution"
       :user="user"
       :loading="loading"
-      :error="error"
-      @close="showFormModal = false"
+      :form-error="formError"
+      @close="closeFormModal"
       @save="handleSave"
     />
 
@@ -157,7 +189,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useDistributions } from '~/composables/useDistributions'
 import type { Distribution } from '~/composables/useDistributions'
 import { driver } from "driver.js"
@@ -168,7 +200,25 @@ import DistributionCard from '~/components/Distribution/DistributionCard.vue'
 import DistributionForm from '~/components/Distribution/DistributionForm.vue'
 import DeleteConfirmModal from '~/components/Distribution/DeleteConfirmModal.vue'
 
-const activeTab = ref('distributions')
+type DashTab = 'distributions' | 'pricing'
+
+const route = useRoute()
+const router = useRouter()
+
+const resolveTab = (q: unknown): DashTab => (q === 'pricing' ? 'pricing' : 'distributions')
+
+const activeTab = computed({
+  get: () => resolveTab(route.query.tab),
+  set: (tab: DashTab) => {
+    const query = { ...route.query } as Record<string, unknown>
+    if (tab === 'distributions') {
+      delete query.tab
+    } else {
+      query.tab = tab
+    }
+    router.push({ path: route.path, query: query as Record<string, string> })
+  }
+})
 
 const initTour = () => {
   const driverObj = driver({
@@ -178,13 +228,13 @@ const initTour = () => {
     doneBtnText: 'Готово',
     steps: [
       { element: '#tour-tab-distributions', popover: { title: 'Ваши рассылки', description: 'Здесь отображаются все ваши активные кампании по поиску работы.', side: "bottom", align: 'start' }},
-      { element: '#tour-stats', popover: { title: 'Ваша статистика', description: 'Тут вы видите, сколько рассылок запущено прямо сейчас.', side: "bottom", align: 'start' }},
+      { element: '#tour-stats', popover: { title: 'Ваша статистика', description: 'Сводка по активным рассылкам, отправленным откликам и ответам работодателей.', side: "bottom", align: 'start' }},
       { element: '#tour-create', popover: { title: 'Создание', description: 'Нажмите сюда, чтобы запустить новую автоматическую рассылку откликов.', side: "left", align: 'start' }},
+      { element: '#tour-distributions', popover: { title: 'Список рассылок', description: 'Карточки показывают прогресс, отклики и ответы по каждой кампании.', side: "top", align: 'start' }},
       { element: '#tour-tab-pricing', popover: { title: 'Тарифы', description: 'Здесь вы можете выбрать подходящий план и продлить подписку.', side: "bottom", align: 'start' }},
     ]
   });
 
-  // Запускаем только один раз для новых пользователей
   const hasSeenTour = localStorage.getItem('has_seen_tour_v1')
   if (!hasSeenTour) {
     driverObj.drive();
@@ -195,7 +245,9 @@ const initTour = () => {
 const { 
   distributions, 
   loading, 
-  error, 
+  listError,
+  formError,
+  clearFormError,
   fetchDistributions, 
   deleteDistribution,
   createDistribution,
@@ -223,11 +275,18 @@ const totalResponses = computed(() =>
 
 const openCreateModal = () => {
   editingDistribution.value = null
+  clearFormError()
   showFormModal.value = true
+}
+
+const closeFormModal = () => {
+  showFormModal.value = false
+  clearFormError()
 }
 
 const openEditModal = (dist: Distribution) => {
   editingDistribution.value = dist
+  clearFormError()
   showFormModal.value = true
 }
 
@@ -246,6 +305,7 @@ const handleSave = async (data: any) => {
 
   if (success) {
     showFormModal.value = false
+    clearFormError()
   }
 }
 
@@ -261,21 +321,22 @@ const handleDelete = async () => {
 
 const handleToggleStatus = async (dist: Distribution) => {
   const newStatus = dist.status === 'active' ? 'paused' : 'active'
-  await updateDistribution(dist.id, { status: newStatus })
+  await updateDistribution(dist.id, { status: newStatus }, { errorScope: 'list' })
 }
 
 const handleLogout = () => {
+  if (!confirm('Выйти из аккаунта?')) return
   localStorage.removeItem('auth_token')
   navigateTo('/signin')
 }
 
-onMounted(() => {
-  fetchDistributions()
+onMounted(async () => {
+  await fetchDistributions()
   fetchUserProfile()
-  
-  // Даем время на рендер и запускаем тур
-  setTimeout(() => {
+  await nextTick()
+  if (activeTab.value === 'distributions') {
+    await nextTick()
     initTour()
-  }, 1000)
+  }
 })
 </script>

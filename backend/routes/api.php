@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\HhResumeController;
 use App\Distributions\Http\Controllers\DistributionController;
 
 // Public routes
@@ -15,5 +16,6 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
     
+    Route::get('/hh/resumes', [HhResumeController::class, 'index']);
     Route::apiResource('distributions', DistributionController::class);
 });

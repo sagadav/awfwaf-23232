@@ -31,7 +31,8 @@ class DistributionService
         $distribution = new ResumeDistribution();
         $distribution->user_id = $userId;
         $distribution->fill($data->toArray());
-        
+        $this->applyResumeNormalization($distribution);
+
         // Initial defaults
         $distribution->applications_sent = 0;
         $distribution->views_count = 0;
@@ -59,7 +60,8 @@ class DistributionService
 
         $oldStatus = $distribution->status;
         $distribution->fill(array_filter($data->toArray(), fn($value) => $value !== null));
-        
+        $this->applyResumeNormalization($distribution);
+
         $saved = $this->repository->save($distribution);
 
         if ($saved->status === 'active' && $oldStatus !== 'active') {
@@ -81,5 +83,20 @@ class DistributionService
         }
 
         return $this->repository->delete($distribution);
+    }
+
+    private function applyResumeNormalization(ResumeDistribution $distribution): void
+    {
+        if (! empty($distribution->resume_hash)) {
+            $distribution->resume_link = 'https://hh.ru/resume/'.$distribution->resume_hash;
+
+            return;
+        }
+        if (! empty($distribution->resume_link)) {
+            $path = parse_url($distribution->resume_link, PHP_URL_PATH);
+            if ($path) {
+                $distribution->resume_hash = basename($path);
+            }
+        }
     }
 }

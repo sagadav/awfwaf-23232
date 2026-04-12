@@ -15,10 +15,29 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Cursor Autopilot (tokens / chat id)
+.autopilot.json
+
 # Environment
 .env
 .env.backup
 .env.production
 
+# Локальный дамп сессии hh.ru (токены / куки — не коммитить)
+backend/cookies.json
+
 # Dependencies (if installed in root)
 vendor/
+
+# Local Telegram bridge (inbound messages)
+tmp/telegram-bridge-inbox.jsonl
+tmp/telegram-bridge-latest.json
+tmp/telegram-cursor-prompt.md
+tmp/.telegram-bridge.pid
+tmp/.telegram-bridge.spawn.lock
+
+plugins
+scripts
+.cursor
+.autopilot.*
+frontend1/.output

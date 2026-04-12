@@ -35,10 +35,17 @@ class ProcessDistribution implements ShouldQueue
         $user = $this->distribution->user;
         $filters = $this->distribution->search_filters;
         $text = str_replace(' ', '+', $filters['query'] ?? '');
-        // 1. Получаем путь из URL (отбрасываем домен и параметры после ?)
-        $path = parse_url($this->distribution->resume_link, PHP_URL_PATH);
-        // 2. Берем последнюю часть пути (имя "файла")
-        $hash = basename($path);
+        $hash = $this->distribution->resume_hash;
+        if (empty($hash) && $this->distribution->resume_link) {
+            $path = parse_url($this->distribution->resume_link, PHP_URL_PATH);
+            $hash = $path ? basename($path) : '';
+        }
+        if ($hash === '' || $hash === null) {
+            \Log::error("Distribution {$this->distribution->id}: empty resume hash");
+            $this->distribution->update(['status' => 'failed']);
+
+            return;
+        }
         $data = [
             'distribution_id' => $this->distribution->id,
             'user_id' => $user->id,

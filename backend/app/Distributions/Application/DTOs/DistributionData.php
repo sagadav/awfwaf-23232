@@ -6,7 +6,9 @@ class DistributionData
 {
     public function __construct(
         public readonly int $targetApplications,
-        public readonly string $resumeLink,
+        public readonly ?string $resumeLink,
+        public readonly ?string $resumeHash = null,
+        public readonly ?string $resumeTitle = null,
         public readonly ?array $searchFilters = null,
         public readonly ?string $status = 'active',
         public readonly ?int $dailyLimit = null,
@@ -23,7 +25,9 @@ class DistributionData
     {
         return new self(
             targetApplications: (int) $data['target_applications'],
-            resumeLink: $data['resume_link'],
+            resumeLink: $data['resume_link'] ?? null,
+            resumeHash: $data['resume_hash'] ?? null,
+            resumeTitle: $data['resume_title'] ?? null,
             searchFilters: $data['search_filters'] ?? null,
             status: $data['status'] ?? 'active',
             dailyLimit: isset($data['daily_limit']) ? (int) $data['daily_limit'] : null,
@@ -41,6 +45,8 @@ class DistributionData
         return [
             'target_applications' => $this->targetApplications,
             'resume_link' => $this->resumeLink,
+            'resume_hash' => $this->resumeHash,
+            'resume_title' => $this->resumeTitle,
             'search_filters' => $this->searchFilters,
             'status' => $this->status,
             'daily_limit' => $this->dailyLimit,

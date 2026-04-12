@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
 
 class DistributionController extends Controller
 {
@@ -35,7 +36,9 @@ class DistributionController extends Controller
         $maxApps = $request->user()->getMaxApplications();
         $validated = $request->validate([
             'target_applications' => 'required|integer|min:1|max:' . $maxApps,
-            'resume_link' => 'required|url',
+            'resume_hash' => ['nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9]+$/', Rule::requiredWithout('resume_link')],
+            'resume_link' => ['nullable', 'string', 'url', Rule::requiredWithout('resume_hash')],
+            'resume_title' => 'nullable|string|max:500',
             'search_filters' => 'nullable|array',
             'daily_limit' => 'nullable|integer|min:1|max:' . $maxApps,
             'start_time' => 'nullable|date_format:H:i',
@@ -94,7 +97,9 @@ class DistributionController extends Controller
         $validated = $request->validate([
             'status' => 'sometimes|in:active,paused,completed,failed',
             'target_applications' => 'sometimes|integer|min:1|max:' . $maxApps,
-            'resume_link' => 'sometimes|url',
+            'resume_hash' => ['sometimes', 'nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9]+$/'],
+            'resume_link' => ['sometimes', 'nullable', 'string', 'url'],
+            'resume_title' => 'sometimes|nullable|string|max:500',
             'search_filters' => 'sometimes|array',
             'daily_limit' => 'sometimes|integer|min:1|max:' . $maxApps,
             'start_time' => 'sometimes|date_format:H:i',
@@ -110,9 +115,26 @@ class DistributionController extends Controller
              return response()->json(['message' => 'Not found'], 404);
         }
 
+        $merged = array_merge(
+            $currentDistribution->only([
+                'target_applications', 'resume_link', 'resume_hash', 'resume_title',
+                'search_filters', 'daily_limit', 'start_time', 'end_time', 'cover_letter', 'status',
+            ]),
+            $validated
+        );
+
+        if (empty($merged['resume_hash']) && empty($merged['resume_link'])) {
+            return response()->json([
+                'message' => 'Укажите резюме из списка или ссылку на резюме.',
+                'errors' => [
+                    'resume_hash' => ['Нужно выбрать резюме или указать ссылку.'],
+                ],
+            ], 422);
+        }
+
         // Determine new state
-        $newStatus = $validated['status'] ?? $currentDistribution->status;
-        $newTarget = $validated['target_applications'] ?? $currentDistribution->target_applications;
+        $newStatus = $merged['status'] ?? $currentDistribution->status;
+        $newTarget = $merged['target_applications'] ?? $currentDistribution->target_applications;
 
         // Only check limit if the task is going to be active or paused
         if (in_array($newStatus, ['active', 'paused'])) {
@@ -135,7 +157,7 @@ class DistributionController extends Controller
         $distribution = $this->distributionService->updateDistribution(
             $id,
             $request->user()->id,
-            DistributionData::fromArray($validated)
+            DistributionData::fromArray($merged)
         );
 
         if (!$distribution) {

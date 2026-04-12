@@ -14,10 +14,18 @@
           </span>
         </div>
         <div class="text-xs sm:text-sm text-gray-600 truncate pr-2">
-          <span class="font-medium">Резюме:</span> 
-          <a :href="props.distribution.resume_link" target="_blank" class="text-brand-primary hover:underline ml-1">
-            {{ props.distribution.resume_link }}
-          </a>
+          <span class="font-medium">Резюме:</span>
+          <template v-if="props.distribution.resume_link">
+            <a
+              :href="props.distribution.resume_link"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-brand-primary hover:underline ml-1"
+            >
+              {{ resumeLabel }}
+            </a>
+          </template>
+          <span v-else class="ml-1 text-gray-500">—</span>
         </div>
         <div v-if="props.distribution.search_filters?.query" class="text-xs sm:text-sm text-gray-500 mt-1 truncate pr-2">
           <span class="font-medium text-gray-600">Поиск:</span> {{ props.distribution.search_filters.query }}
@@ -61,23 +69,9 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
-      <div class="bg-gray-50/50 p-2.5 rounded-xl">
-        <p class="text-[10px] sm:text-xs text-gray-400 mb-0.5 uppercase tracking-wider font-bold">Цель</p>
-        <p class="text-base sm:text-lg font-bold text-gray-900 leading-none">{{ props.distribution.target_applications }}</p>
-      </div>
-      <!-- <div class="bg-gray-50/50 p-2.5 rounded-xl">
-        <p class="text-[10px] sm:text-xs text-gray-400 mb-0.5 uppercase tracking-wider font-bold">Отклики</p>
-        <p class="text-base sm:text-lg font-bold text-gray-900 leading-none">{{ props.distribution.applications_sent }}</p>
-      </div>
-      <div class="bg-gray-50/50 p-2.5 rounded-xl">
-        <p class="text-[10px] sm:text-xs text-gray-400 mb-0.5 uppercase tracking-wider font-bold">Просмотры</p>
-        <p class="text-base sm:text-lg font-bold text-gray-900 leading-none">{{ props.distribution.views_count }}</p>
-      </div>
-      <div class="bg-gray-50/50 p-2.5 rounded-xl">
-        <p class="text-[10px] sm:text-xs text-gray-400 mb-0.5 uppercase tracking-wider font-bold">Ответы</p>
-        <p class="text-base sm:text-lg font-bold text-gray-900 leading-none">{{ props.distribution.responses_count }}</p>
-      </div> -->
+    <div class="bg-gray-50/50 p-2.5 rounded-xl mb-3 inline-block min-w-[7rem]">
+      <p class="text-[10px] sm:text-xs text-gray-400 mb-0.5 uppercase tracking-wider font-bold">Цель</p>
+      <p class="text-base sm:text-lg font-bold text-gray-900 leading-none">{{ props.distribution.target_applications }}</p>
     </div>
 
     <div class="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
@@ -86,6 +80,18 @@
         :style="{ width: `${progress}%` }"
       ></div>
     </div>
+    <div class="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600">
+      <span class="font-medium text-gray-800">
+        {{ props.distribution.applications_sent }} из {{ props.distribution.target_applications }}
+      </span>
+      <span v-if="lastSentLabel" class="text-gray-400 text-[11px] sm:text-xs">
+        {{ lastSentLabel }}
+      </span>
+    </div>
+    <p class="text-[11px] sm:text-xs text-gray-500 mt-1.5">
+      Ответов {{ props.distribution.responses_count }}
+      · Просмотров {{ props.distribution.views_count }}
+    </p>
   </div>
 </template>
 
@@ -99,9 +105,28 @@ const props = defineProps<{
 
 defineEmits(['edit', 'delete', 'toggle-status'])
 
+const resumeLabel = computed(() => {
+  const t = props.distribution.resume_title?.trim()
+  if (t) return t
+  return props.distribution.resume_link || ''
+})
+
 const progress = computed(() => {
   if (props.distribution.target_applications === 0) return 0
   return Math.min(100, (props.distribution.applications_sent / props.distribution.target_applications) * 100)
+})
+
+const lastSentLabel = computed(() => {
+  const raw = props.distribution.last_sent_at
+  if (!raw) return ''
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return ''
+  return `Последняя отправка: ${d.toLocaleString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  })}`
 })
 
 const statusText = computed(() => {

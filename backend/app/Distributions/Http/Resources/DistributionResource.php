@@ -29,6 +29,8 @@ class DistributionResource extends JsonResource
             'last_sent_at' => $this->last_sent_at?->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
             'resume_link' => $this->resume_link,
+            'resume_hash' => $this->resume_hash,
+            'resume_title' => $this->resume_title,
             'vacancy_link' => $this->vacancy_link,
             'cover_letter' => $this->cover_letter,
             'created_at' => $this->created_at->toIso8601String(),
