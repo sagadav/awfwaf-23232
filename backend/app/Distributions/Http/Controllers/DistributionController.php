@@ -9,7 +9,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Validation\Rule;
 
 class DistributionController extends Controller
 {
@@ -36,8 +35,8 @@ class DistributionController extends Controller
         $maxApps = $request->user()->getMaxApplications();
         $validated = $request->validate([
             'target_applications' => 'required|integer|min:1|max:' . $maxApps,
-            'resume_hash' => ['nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9]+$/', Rule::requiredWithout('resume_link')],
-            'resume_link' => ['nullable', 'string', 'url', Rule::requiredWithout('resume_hash')],
+            'resume_hash' => ['nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9]+$/', 'required_without:resume_link'],
+            'resume_link' => ['nullable', 'string', 'url', 'required_without:resume_hash'],
             'resume_title' => 'nullable|string|max:500',
             'search_filters' => 'nullable|array',
             'daily_limit' => 'nullable|integer|min:1|max:' . $maxApps,
