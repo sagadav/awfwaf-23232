@@ -7,6 +7,7 @@ use App\Distributions\Domain\Repositories\DistributionRepositoryInterface;
 use App\Models\ResumeDistribution;
 use App\Jobs\ProcessDistribution;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class DistributionService
 {
@@ -30,7 +31,7 @@ class DistributionService
     {
         $distribution = new ResumeDistribution();
         $distribution->user_id = $userId;
-        $distribution->fill($data->toArray());
+        $distribution->fill($this->filterPersistableAttributes($data->toArray()));
         $this->applyResumeNormalization($distribution);
 
         // Initial defaults
@@ -59,7 +60,11 @@ class DistributionService
         }
 
         $oldStatus = $distribution->status;
-        $distribution->fill(array_filter($data->toArray(), fn($value) => $value !== null));
+        $distribution->fill(
+            $this->filterPersistableAttributes(
+                array_filter($data->toArray(), fn($value) => $value !== null)
+            )
+        );
         $this->applyResumeNormalization($distribution);
 
         $saved = $this->repository->save($distribution);
@@ -98,5 +103,23 @@ class DistributionService
                 $distribution->resume_hash = basename($path);
             }
         }
+    }
+
+    /**
+     * Keep only columns that exist in current DB schema.
+     */
+    private function filterPersistableAttributes(array $attributes): array
+    {
+        static $columns = null;
+
+        if ($columns === null) {
+            $columns = array_flip(Schema::getColumnListing('resume_distributions'));
+        }
+
+        return array_filter(
+            $attributes,
+            static fn ($_value, $key) => isset($columns[$key]),
+            ARRAY_FILTER_USE_BOTH
+        );
     }
 }
